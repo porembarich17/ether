@@ -6,6 +6,7 @@ from ether.topology import Topology
 from ether.vis import draw_basic
 from ether.blocks.nodes import create_nuc_node, create_rpi3_node
 from ether.core import Connection, Link, Node
+from ether.sdn import wireguard_output
 
 def main():
     topology = Topology()
@@ -50,6 +51,8 @@ def main():
 
     print('num nodes:', len(topology.nodes))
 
+
+    wireguard_output.create_output(topology)
 
 if __name__ == '__main__':
     main()
