@@ -18,7 +18,7 @@ def main():
     n4 = create_rpi3_node()
     n5 = create_rpi3_node()
 
-    l0 = Link(tags={'name': 'Router', 'type': 'Router'})
+    l0 = Link(tags={'name': 'Router', 'type': 'Router'}, allowed_ip_range=["10.0.0.1/32", "10.0.0.100/32"])
     #l1 = Link(tags={'name': 'link_%s' % n1.name})
     #l2 = Link(tags={'name': 'link_%s' % n2.name})
     #l3 = Link(tags={'name': 'link_%s' % n3.name})

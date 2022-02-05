@@ -220,7 +220,11 @@ class Link:
     num_flows: int
     max_allocatable: float
 
-    def __init__(self, bandwidth: int = 100, tags=None) -> None:
+    # needed for Wireguard configs
+    ip_address: str
+    allowed_ip_range: List
+
+    def __init__(self, bandwidth: int = 100, tags=None, ip_address: str = '0.0.0.0/0', allowed_ip_range=None) -> None:
         super().__init__()
         self.bandwidth = bandwidth
         self.tags = tags or dict()
@@ -228,6 +232,9 @@ class Link:
         self.allocation = dict()
         self.num_flows = 0
         self.max_allocatable = bandwidth
+
+        self.ip_address = ip_address
+        self.allowed_ip_range = allowed_ip_range or []
 
     def recalculate_max_allocatable(self):
         num_flows = self.num_flows
