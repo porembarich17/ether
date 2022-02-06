@@ -11,14 +11,14 @@ from ether.sdn import wireguard_output
 def main():
     topology = Topology()
 
-    n0 = create_rpi3_node()
-    n1 = create_rpi3_node()
-    n2 = create_rpi3_node()
-    n3 = create_rpi3_node()
-    n4 = create_rpi3_node()
-    n5 = create_rpi3_node()
+    n0 = create_rpi3_node(ip_address='100.100.0.1:51820', allowed_ip_range=["192.168.0.10/32"])
+    n1 = create_rpi3_node(ip_address='100.100.0.2:51820', allowed_ip_range=["192.168.0.10/32"])
+    n2 = create_rpi3_node(ip_address='100.100.0.3:51820', allowed_ip_range=["192.168.0.10/32"])
+    n3 = create_rpi3_node(ip_address='100.100.0.4:51820', allowed_ip_range=["192.168.0.10/32"])
+    n4 = create_rpi3_node(ip_address='100.100.0.5:51820', allowed_ip_range=["192.168.0.10/32"])
+    n5 = create_rpi3_node(ip_address='100.100.0.6:51820', allowed_ip_range=["192.168.0.10/32"])
 
-    l0 = Link(tags={'name': 'Router', 'type': 'Router'}, allowed_ip_range=["10.0.0.1/32", "10.0.0.100/32"])
+    l0 = Link(tags={'name': 'Router', 'type': 'Router'}, ip_address='192.168.0.10', allowed_ip_range=["100.100.0.1/24"])
     #l1 = Link(tags={'name': 'link_%s' % n1.name})
     #l2 = Link(tags={'name': 'link_%s' % n2.name})
     #l3 = Link(tags={'name': 'link_%s' % n3.name})

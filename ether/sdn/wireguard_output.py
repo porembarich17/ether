@@ -107,7 +107,7 @@ def create_output(topology):
 
 
     for n in nodes:
-        conf_temp = conf_template_interface.substitute(interface_address=str(n), interface_private=privateKeys[str(n)], interface_port=str(1))
+        conf_temp = conf_template_interface.substitute(interface_address=str(n.ip_address), interface_private=privateKeys[str(n)], interface_port=str(1))
         print("Working on Node:")
         print(n)
         for e in edges:

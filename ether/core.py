@@ -78,13 +78,20 @@ class Node:
     labels: Dict[str, str]
     coordinate: Optional[Coordinate]
 
-    def __init__(self, name: str, capacity: Capacity = None, arch='x86', labels: Dict[str, str] = None) -> None:
+    #Wireguard config attributes
+    ip_address: str
+    allowed_ip_range: List
+
+    def __init__(self, name: str, capacity: Capacity = None, arch='x86', labels: Dict[str, str] = None, ip_address: str='0.0.0.0:0', allowed_ip_range=None) -> None:
         super().__init__()
         self.name = name
         self.capacity = capacity or Capacity()
         self.arch = arch
         self.labels = labels or dict()
         self.coordinate = None
+
+        self.ip_address = ip_address
+        self.allowed_ip_range = allowed_ip_range or []
 
     def __repr__(self):
         return self.name

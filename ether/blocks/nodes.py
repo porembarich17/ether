@@ -1,6 +1,6 @@
 import itertools
 from collections import defaultdict
-from typing import Dict
+from typing import List, Dict
 
 from ether.core import Node, Capacity
 from ether.util import parse_size_string
@@ -30,7 +30,7 @@ def create_server_node(name=None) -> Node:
                        })
 
 
-def create_rpi3_node(name=None) -> Node:
+def create_rpi3_node(name=None, ip_address: str='0.0.0.0:0', allowed_ip_range=None) -> Node:
     name = name if name is not None else 'rpi3_%d' % next(counters['rpi3'])
 
     return create_node(name=name,
@@ -38,7 +38,7 @@ def create_rpi3_node(name=None) -> Node:
                        labels={
                            'ether.edgerun.io/type': 'sbc',
                            'ether.edgerun.io/model': 'rpi3b+'
-                       })
+                       }, ip_address=ip_address, allowed_ip_range=allowed_ip_range)
 
 
 def create_nuc_node(name=None) -> Node:
@@ -127,9 +127,9 @@ def create_nx(name=None) -> Node:
                        })
 
 
-def create_node(name: str, cpus: int, mem: str, arch: str, labels: Dict[str, str]) -> Node:
+def create_node(name: str, cpus: int, mem: str, arch: str, labels: Dict[str, str], ip_address: str='0.0.0.0:0', allowed_ip_range: List=[]) -> Node:
     capacity = Capacity(cpu_millis=cpus * 1000, memory=parse_size_string(mem))
-    return Node(name, capacity=capacity, arch=arch, labels=labels)
+    return Node(name, capacity=capacity, arch=arch, labels=labels, ip_address=ip_address, allowed_ip_range=allowed_ip_range)
 
 
 rpi3 = create_rpi3_node
