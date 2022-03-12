@@ -1,12 +1,18 @@
 import itertools
 from collections import defaultdict
 from typing import List, Dict
+from dataclasses import dataclass
 
 from ether.core import Node, Capacity
 from ether.util import parse_size_string
 
 counters = defaultdict(lambda: itertools.count(0, 1))
 
+@dataclass
+class WireguardLinkConfig:
+    ip_address: str
+    real_ip_address: str
+    listen_port: int = 51820
 
 def create_vm_node(name=None) -> Node:
     name = name if name is not None else 'cloudvm_%d' % next(counters['cloudvm'])

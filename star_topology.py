@@ -8,15 +8,16 @@ from ether.blocks.nodes import create_nuc_node, create_rpi3_node
 from ether.core import Connection, Link, Node
 from ether.sdn import wireguard_output
 
+
 def main():
     topology = Topology()
 
-    n0 = create_rpi3_node(ip_address='100.100.0.1:51820', allowed_ip_range=["192.168.0.10/32"])
-    n1 = create_rpi3_node(ip_address='100.100.0.2:51820', allowed_ip_range=["192.168.0.10/32"])
-    n2 = create_rpi3_node(ip_address='100.100.0.3:51820', allowed_ip_range=["192.168.0.10/32"])
-    n3 = create_rpi3_node(ip_address='100.100.0.4:51820', allowed_ip_range=["192.168.0.10/32"])
-    n4 = create_rpi3_node(ip_address='100.100.0.5:51820', allowed_ip_range=["192.168.0.10/32"])
-    n5 = create_rpi3_node(ip_address='100.100.0.6:51820', allowed_ip_range=["192.168.0.10/32"])
+    n0 = create_rpi3_node(ip_address='100.100.0.1:51820')
+    n1 = create_rpi3_node(ip_address='100.100.0.2:51820')
+    n2 = create_rpi3_node(ip_address='100.100.0.3:51820')
+    n3 = create_rpi3_node(ip_address='100.100.0.4:51820')
+    n4 = create_rpi3_node(ip_address='100.100.0.5:51820')
+    n5 = create_rpi3_node(ip_address='100.100.0.6:51820')
 
     l0 = Link(tags={'name': 'Router', 'type': 'Router'}, ip_address='192.168.0.10', allowed_ip_range=["100.100.0.1/24"])
     #l1 = Link(tags={'name': 'link_%s' % n1.name})

@@ -17,13 +17,15 @@ def ips_to_string(ip_list):
 
 def create_output(topology):
     conf_template_interface = Template("[Interface]\nAddress = $interface_address \nPrivateKey = $interface_private ListenPort = $interface_port\n\n")
-    conf_template_peer = Template("[Peer]\nPublicKey = $peer_public Endpoint = $peer_endpoint \nAllowedIPs = $peer_allowed \nPersistentKeepalive = $peer_persistent_keep_alive\n\n")
+    conf_template_peer_link = Template("[Peer]\nPublicKey = $peer_public Endpoint = $peer_endpoint \nAllowedIPs = $peer_allowed \nPersistentKeepalive = $peer_persistent_keep_alive\n\n")
+    conf_template_peer_node = Template("[Peer]\nPublicKey = $peer_public Endpoint = $peer_endpoint \nPersistentKeepalive = $peer_persistent_keep_alive\n\n")
 
     links = [node for node in topology.nodes if isinstance(node, Link)]
     nodes = [node for node in topology.nodes if isinstance(node, Node)]
 
     #TODO: Create some type of IP-Pool to get adresses from (possible input as range)
-    #TODO: Get latency to work somehow
+    #TODO: Get latency to work somehow (Linux TC via command line)
+    #TODO: distribute each configuration via scp/ssh on nodes with matching IP addresses (also rollback)
 
     #create a list of key pairs for each node
     privateKeys = {}
@@ -70,16 +72,9 @@ def create_output(topology):
             if (e[0] == l):
                 print("to: " + str(e[1]))
                 if(type(e[1]) is Node):
-                    conf_temp += conf_template_peer.substitute(peer_public=publicKeys[str(e[1])], peer_endpoint=str(e[1]), peer_allowed=str(e[1]), peer_persistent_keep_alive=str(21))
+                    conf_temp += conf_template_peer_link.substitute(peer_public=publicKeys[str(e[1])], peer_endpoint=str(e[1]), peer_allowed=str(e[1]), peer_persistent_keep_alive=str(21))
                 elif(type(e[1]) is Link):
-                    conf_temp += conf_template_peer.substitute(peer_public=publicKeys[str(e[1].tags['name'])], peer_endpoint=str(e[1].ip_address), peer_allowed=ips_to_string(e[1].allowed_ip_range), peer_persistent_keep_alive=str(21))
-            #elif (e[1] == l):
-            #    print("from: " + str(e[0]))
-            #    if(type(e[0]) is Node):
-            #        conf_temp += conf_template_peer.substitute(peer_public=publicKeys[str(e[0])], peer_endpoint=str(e[0]), peer_allowed=str(e[0]), peer_persistent_keep_alive=str(21))
-            #    elif(type(e[0]) is Link):
-            #        conf_temp += conf_template_peer.substitute(peer_public=publicKeys[str(e[0].tags['name'])], peer_endpoint=str(e[0].ip_address), peer_allowed=ips_to_string(e[0].allowed_ip_range), peer_persistent_keep_alive=str(21))
-
+                    conf_temp += conf_template_peer_link.substitute(peer_public=publicKeys[str(e[1].tags['name'])], peer_endpoint=str(e[1].ip_address), peer_allowed=ips_to_string(e[1].allowed_ip_range), peer_persistent_keep_alive=str(21))
 
         print(conf_temp)
         print("------------")
@@ -94,15 +89,9 @@ def create_output(topology):
             if (e[0] == n):
                 print("to: " + str(e[1]))
                 if(type(e[1]) is Node):
-                    conf_temp += conf_template_peer.substitute(peer_public=publicKeys[str(e[1])], peer_endpoint=str(e[1]), peer_allowed=str(e[1]), peer_persistent_keep_alive=str(21))
+                    conf_temp += conf_template_peer_node.substitute(peer_public=publicKeys[str(e[1])], peer_endpoint=str(e[1]), peer_persistent_keep_alive=str(21))
                 elif(type(e[1]) is Link):
-                    conf_temp += conf_template_peer.substitute(peer_public=publicKeys[str(e[1].tags['name'])], peer_endpoint=str(e[1].ip_address), peer_allowed=ips_to_string(e[1].allowed_ip_range), peer_persistent_keep_alive=str(21))
-            #elif (e[1] == n):
-            #    print("from: " + str(e[0]))
-            #    if(type(e[0]) is Node):
-            #        conf_temp += conf_template_peer.substitute(peer_public=publicKeys[str(e[0])], peer_endpoint=str(e[0]), peer_allowed=str(e[0]), peer_persistent_keep_alive=str(21))
-            #    elif(type(e[0]) is Link):
-            #        conf_temp += conf_template_peer.substitute(peer_public=publicKeys[str(e[0].tags['name'])], peer_endpoint=str(e[0].ip_address), peer_allowed=ips_to_string(e[0].allowed_ip_range), peer_persistent_keep_alive=str(21))
+                    conf_temp += conf_template_peer_node.substitute(peer_public=publicKeys[str(e[1].tags['name'])], peer_endpoint=str(e[1].ip_address), peer_persistent_keep_alive=str(21))
 
         print(conf_temp)
         print("------------")

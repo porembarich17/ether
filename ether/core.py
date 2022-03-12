@@ -5,6 +5,7 @@ from typing import List, Dict, NamedTuple, Union, AnyStr, Optional
 import numpy as np
 import simpy
 from srds import ParameterizedDistribution
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,11 @@ A network node is a vertex in a topology. It can either be a node (a computer), 
 links (like switches).
 """
 
+@dataclass
+class WireguardNodeConfig:
+    ip_address: str
+    allowed_ip_range: str
+    persistent_keep_alive: int = 21
 
 class Connection(NamedTuple):
     """
