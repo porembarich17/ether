@@ -12,14 +12,14 @@ from ether.sdn import wireguard_output
 def main():
     topology = Topology()
 
-    n0 = create_rpi3_node(ip_address='100.100.0.1:51820')
-    n1 = create_rpi3_node(ip_address='100.100.0.2:51820')
-    n2 = create_rpi3_node(ip_address='100.100.0.3:51820')
-    n3 = create_rpi3_node(ip_address='100.100.0.4:51820')
-    n4 = create_rpi3_node(ip_address='100.100.0.5:51820')
-    n5 = create_rpi3_node(ip_address='100.100.0.6:51820')
+    n0 = create_rpi3_node(ip_address='192.168.0.144')
+    #n1 = create_rpi3_node(ip_address='192.168.0.144')
+    #n2 = create_rpi3_node(ip_address='100.100.0.3:51820')
+    #n3 = create_rpi3_node(ip_address='100.100.0.4:51820')
+    #n4 = create_rpi3_node(ip_address='100.100.0.5:51820')
+    #n5 = create_rpi3_node(ip_address='100.100.0.6:51820')
 
-    l0 = Link(tags={'name': 'Router', 'type': 'Router'}, ip_address='192.168.0.10', allowed_ip_range=["100.100.0.1/24"])
+    l0 = Link(tags={'name': 'Router', 'type': 'Router'}, ip_address='192.168.0.192', allowed_ip_range=["11.11.11.0/24"])
     #l1 = Link(tags={'name': 'link_%s' % n1.name})
     #l2 = Link(tags={'name': 'link_%s' % n2.name})
     #l3 = Link(tags={'name': 'link_%s' % n3.name})
@@ -27,11 +27,11 @@ def main():
     #l5 = Link(tags={'name': 'link_%s' % n5.name})
 
     topology.add_connection(Connection(n0, l0, 10))
-    topology.add_connection(Connection(n1, l0, 10))
-    topology.add_connection(Connection(n2, l0, 10))
-    topology.add_connection(Connection(n3, l0, 10))
-    topology.add_connection(Connection(n4, l0, 10))
-    topology.add_connection(Connection(n5, l0, 10))
+    #topology.add_connection(Connection(n1, l0, 100))
+    #topology.add_connection(Connection(n2, l0, 10))
+    #topology.add_connection(Connection(n3, l0, 10))
+    #topology.add_connection(Connection(n4, l0, 10))
+    #topology.add_connection(Connection(n5, l0, 10))
 
 
 
@@ -48,7 +48,7 @@ def main():
     draw_basic(topology)
     fig = plt.gcf()
     fig.set_size_inches(18.5, 10.5)
-    plt.show()  # display
+    #plt.show()  # display
 
     print('num nodes:', len(topology.nodes))
 
