@@ -86,9 +86,10 @@ class Node:
 
     #Wireguard config attributes
     ip_address: str
+    virtual_ip_address: str
     allowed_ip_range: List
 
-    def __init__(self, name: str, capacity: Capacity = None, arch='x86', labels: Dict[str, str] = None, ip_address: str='0.0.0.0:0', allowed_ip_range=None) -> None:
+    def __init__(self, name: str, capacity: Capacity = None, arch='x86', labels: Dict[str, str] = None, ip_address: str='0.0.0.0', virtual_ip_address: str='0.0.0.0', allowed_ip_range=None) -> None:
         super().__init__()
         self.name = name
         self.capacity = capacity or Capacity()
@@ -97,6 +98,7 @@ class Node:
         self.coordinate = None
 
         self.ip_address = ip_address
+        self.virtual_ip_address = virtual_ip_address
         self.allowed_ip_range = allowed_ip_range or []
 
     def __repr__(self):
@@ -235,9 +237,10 @@ class Link:
 
     # needed for Wireguard configs
     ip_address: str
+    virtual_ip_address: str
     allowed_ip_range: List
 
-    def __init__(self, bandwidth: int = 100, tags=None, ip_address: str = '0.0.0.0/0', allowed_ip_range=None) -> None:
+    def __init__(self, bandwidth: int = 100, tags=None, ip_address: str = '0.0.0.0', virtual_ip_address: str = '0.0.0.0', allowed_ip_range=None) -> None:
         super().__init__()
         self.bandwidth = bandwidth
         self.tags = tags or dict()
@@ -247,6 +250,7 @@ class Link:
         self.max_allocatable = bandwidth
 
         self.ip_address = ip_address
+        self.virtual_ip_address = virtual_ip_address
         self.allowed_ip_range = allowed_ip_range or []
 
     def recalculate_max_allocatable(self):
