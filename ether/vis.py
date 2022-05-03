@@ -1,6 +1,6 @@
 import networkx as nx
 
-from ether.core import Node, Link
+from ether.core import Node, Link, WgRouter
 
 
 def draw_basic(topology):
@@ -9,7 +9,7 @@ def draw_basic(topology):
     # nodes
 
     hosts = [node for node in topology.nodes if isinstance(node, Node)]
-    links = [node for node in topology.nodes if isinstance(node, Link)]
+    links = [node for node in topology.nodes if isinstance(node, Link) | isinstance(node, WgRouter)]
     switches = [node for node in topology.nodes if str(node).startswith('switch_')]
 
     nx.draw_networkx_nodes(topology, pos,

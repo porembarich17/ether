@@ -4,7 +4,7 @@ import os
 import subprocess
 
 from ether.topology import Topology
-from ether.core import Node, Link, Connection, Route, NetworkNode
+from ether.core import Node, WgRouter, Connection, Route, NetworkNode
 
 def ips_to_string(ip_list):
     ips = ""
@@ -17,11 +17,11 @@ def ips_to_string(ip_list):
 
 def create_output(topology, dry_run = False):
     conf_template_interface = Template("[Interface]\nAddress = $interface_address \nPrivateKey = $interface_private ListenPort = $interface_port\n\n")
-    conf_template_interface_link = Template("[Interface]\nAddress = $interface_address \nPrivateKey = $interface_private PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE \nPostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE \nListenPort = $interface_port\n\n")
+    conf_template_interface_link = Template("[Interface]\nAddress = $interface_address \nPrivateKey = $interface_private PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -A FORWARD -o wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE \nPostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -D FORWARD -o wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE \nListenPort = $interface_port\n\n")
     conf_template_peer_link = Template("[Peer]\nPublicKey = $peer_public Endpoint = $peer_endpoint \nAllowedIPs = $peer_allowed \nPersistentKeepalive = $peer_persistent_keep_alive\n\n")
     conf_template_peer_node = Template("[Peer]\nPublicKey = $peer_public Endpoint = $peer_endpoint \nPersistentKeepalive = $peer_persistent_keep_alive\n\n")
 
-    links = [node for node in topology.nodes if isinstance(node, Link)]
+    links = [node for node in topology.nodes if isinstance(node, WgRouter)]
     nodes = [node for node in topology.nodes if isinstance(node, Node)]
 
     devices_user = "pirate"
@@ -66,7 +66,7 @@ def create_output(topology, dry_run = False):
 
     for l in links:
         conf_temp = conf_template_interface_link.substitute(interface_address=str(l.virtual_ip_address) + "/32", interface_private=privateKeys[str(l.tags['name'])], interface_port=str(51820))
-        print("Working on Link:")
+        print("Working on WgRouter:")
         print(l)
         latency = {}
 
@@ -75,14 +75,18 @@ def create_output(topology, dry_run = False):
                 print("to: " + str(e[1]))
                 if(type(e[1]) is Node):
                     conf_temp += conf_template_peer_link.substitute(peer_public=publicKeys[str(e[1])], peer_endpoint=str(e[1].ip_address) + ":51820", peer_allowed=str(e[1].virtual_ip_address) + "/32", peer_persistent_keep_alive=str(21))
-                elif(type(e[1]) is Link):
-                    conf_temp += conf_template_peer_link.substitute(peer_public=publicKeys[str(e[1])], peer_endpoint=str(e[1].ip_address) + ":51820", peer_allowed=ips_to_string(e[1].allowed_ip_range), peer_persistent_keep_alive=str(21))
+                elif(type(e[1]) is WgRouter):
+                    conf_temp += conf_template_peer_link.substitute(peer_public=publicKeys[str(e[1].tags['name'])], peer_endpoint=str(e[1].ip_address) + ":51820", peer_allowed=ips_to_string(e[1].allowed_ip_range), peer_persistent_keep_alive=str(21))
 
                 lat = topology.latency(n, e[1])
                 if (lat < 0):
                     lat *= -1
 
                 latency[e[1].virtual_ip_address] = lat
+
+        #add default gateway
+        #if l.default_gateway != None:
+        #    conf_temp += conf_template_peer_link.substitute(peer_public=publicKeys[str(l.default_gateway.tags['name'])], peer_endpoint=str(l.default_gateway.ip_address) + ":51820", peer_allowed=ips_to_string(l.default_gateway.allowed_ip_range), peer_persistent_keep_alive=str(21))
 
         conf_temp = conf_temp.replace(" Endpoint", "Endpoint")
         conf_temp = conf_temp.replace(" PostUp", "PostUp")
@@ -146,7 +150,7 @@ def create_output(topology, dry_run = False):
                 print("to: " + str(e[1]))
                 if(type(e[1]) is Node):
                     conf_temp += conf_template_peer_node.substitute(peer_public=publicKeys[str(e[1])], peer_endpoint=str(e[1].virtual_ip_address) + ":51820", peer_persistent_keep_alive=str(21))
-                elif(type(e[1]) is Link):
+                elif(type(e[1]) is WgRouter):
                     conf_temp += conf_template_peer_link.substitute(peer_public=publicKeys[str(e[1].tags['name'])], peer_endpoint=str(e[1].ip_address) + ":51820", peer_allowed=ips_to_string(e[1].allowed_ip_range), peer_persistent_keep_alive=str(21))
 
                 lat = topology.latency(n, e[1])

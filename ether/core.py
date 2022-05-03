@@ -300,6 +300,83 @@ class Link:
         return self.__str__()
 
 
+#WG ROUTER
+class WgRouter:
+    bandwidth: int  # MBit/s
+    tags: dict
+
+    # calculated by rebalance
+    allocation: Dict[Flow, float]
+    num_flows: int
+    max_allocatable: float
+
+    # needed for Wireguard configs
+    ip_address: str
+    virtual_ip_address: str
+    allowed_ip_range: List
+   #default_gateway: WgRouter
+
+    def __init__(self, bandwidth: int = 100, tags=None, ip_address: str = '0.0.0.0', virtual_ip_address: str = '0.0.0.0', allowed_ip_range=None, default_gateway=None) -> None:
+        super().__init__()
+        self.bandwidth = bandwidth
+        self.tags = tags or dict()
+
+        self.allocation = dict()
+        self.num_flows = 0
+        self.max_allocatable = bandwidth
+
+        self.ip_address = ip_address
+        self.virtual_ip_address = virtual_ip_address
+        self.allowed_ip_range = allowed_ip_range or []
+        self.default_gateway = default_gateway or None
+
+    def recalculate_max_allocatable(self):
+        num_flows = self.num_flows
+        bandwidth = self.bandwidth
+
+        if num_flows == 0:
+            self.max_allocatable = bandwidth
+            return
+
+        # fair_per_flow is the maximum bandwidth a flow can get if there are no other flows that require less
+        fair_per_flow = bandwidth / num_flows
+
+        # flows that require less than the fair value may keep it
+        reserved = {k: v for k, v in self.allocation.items() if v < fair_per_flow}
+        allocatable = bandwidth - sum(reserved.values())
+
+        # these are the flows competing for the remaining bandwidth
+        competing_flows = num_flows - len(reserved)
+        if competing_flows:
+            allocatable_per_flow = allocatable / competing_flows
+        else:
+            allocatable_per_flow = allocatable
+
+        self.max_allocatable = max(fair_per_flow, allocatable_per_flow)
+
+    def get_goodput_bps(self, flow: Flow):
+        """
+        Returns the TCP goodput for a flow in bytes per second.
+        """
+        # TODO: calculate more accurately
+        # TODO: use some degradation function? https://pdos.csail.mit.edu/~rtm/papers/icnp97-web.pdf
+
+        if flow not in self.allocation:
+            return None
+
+        allocated = self.allocation[flow]
+        practical_bw = allocated * 125000
+        goodput_magic_number = 0.97  # rough estimate of goodput (~ TCP overhead)
+
+        return practical_bw * goodput_magic_number
+
+    def __str__(self) -> str:
+        return f'WgRouter({hex(id(self))}){self.tags}'
+
+    def __repr__(self):
+        return self.__str__()
+
+
 def remove_and_rebalance(flow: Flow):
     # first, collect all affected flows and links
     affected_flows, affected_links = collect_subnet(flow)
