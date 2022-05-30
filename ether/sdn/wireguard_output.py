@@ -6,11 +6,17 @@ import subprocess
 from ether.topology import Topology
 from ether.core import Node, WgRouter, Connection, Route, NetworkNode
 
-def ips_to_string(ip_list):
+def ips_to_string(ip_list, ip_list_default=None):
     ips = ""
 
     for ip in ip_list:
         ips += ip + ', '
+
+    print(ip_list_default)
+
+    if ip_list_default != None:
+        for ip in ip_list_default:
+                ips += ip + ', '
 
     return ips[0:-2]
 
@@ -76,7 +82,10 @@ def create_output(topology, dry_run = False):
                 if(type(e[1]) is Node):
                     conf_temp += conf_template_peer_link.substitute(peer_public=publicKeys[str(e[1])], peer_endpoint=str(e[1].ip_address) + ":51820", peer_allowed=str(e[1].virtual_ip_address) + "/32", peer_persistent_keep_alive=str(21))
                 elif(type(e[1]) is WgRouter):
-                    conf_temp += conf_template_peer_link.substitute(peer_public=publicKeys[str(e[1].tags['name'])], peer_endpoint=str(e[1].ip_address) + ":51820", peer_allowed=ips_to_string(e[1].allowed_ip_range), peer_persistent_keep_alive=str(21))
+                    if(e[1].default_gateway != None):
+                        conf_temp += conf_template_peer_link.substitute(peer_public=publicKeys[str(e[1].tags['name'])], peer_endpoint=str(e[1].ip_address) + ":51820", peer_allowed=ips_to_string(e[1].allowed_ip_range, e[1].default_gateway.allowed_ip_range), peer_persistent_keep_alive=str(21))
+                    else:
+                        conf_temp += conf_template_peer_link.substitute(peer_public=publicKeys[str(e[1].tags['name'])], peer_endpoint=str(e[1].ip_address) + ":51820", peer_allowed=ips_to_string(e[1].allowed_ip_range, ""), peer_persistent_keep_alive=str(21))
 
                 lat = topology.latency(n, e[1])
                 if (lat < 0):
@@ -122,11 +131,11 @@ def create_output(topology, dry_run = False):
 
             sshProcess.stdin.write("cd ~/../../etc/wireguard \n")
             sshProcess.stdin.write("wg-quick up wg0 \n")
-            sshProcess.stdin.write("sudo tc qdisc add dev wg0 root handle 1: prio \n")
-            sshProcess.stdin.write("sudo tc qdisc add dev wg0 parent 1:3 handle 30: netem delay " + str(500) + "ms \n") #LATSET todo
+            #sshProcess.stdin.write("sudo tc qdisc add dev wg0 root handle 1: prio \n")
+            #sshProcess.stdin.write("sudo tc qdisc add dev wg0 parent 1:3 handle 30: netem delay " + str(500) + "ms \n") #LATSET todo
 
-            for key in latency:
-                sshProcess.stdin.write("sudo tc filter add dev wg0 protocol ip parent 1:0 prio 3 u32 match ip dst " + key + " flowid 1:3 \n")
+            #for key in latency:
+                #sshProcess.stdin.write("sudo tc filter add dev wg0 protocol ip parent 1:0 prio 3 u32 match ip dst " + key + " flowid 1:3 \n")
 
             sshProcess.stdin.write("exit\n")
             sshProcess.stdin.close()
@@ -149,9 +158,13 @@ def create_output(topology, dry_run = False):
             if (e[0] == n):
                 print("to: " + str(e[1]))
                 if(type(e[1]) is Node):
-                    conf_temp += conf_template_peer_node.substitute(peer_public=publicKeys[str(e[1])], peer_endpoint=str(e[1].virtual_ip_address) + ":51820", peer_persistent_keep_alive=str(21))
+                    #conf_temp += conf_template_peer_node.substitute(peer_public=publicKeys[str(e[1])], peer_endpoint=str(e[1].virtual_ip_address) + ":51820", peer_persistent_keep_alive=str(21))
+                    conf_temp += conf_template_peer_node.substitute(peer_public=publicKeys[str(e[1])], peer_endpoint="", peer_persistent_keep_alive=str(21))
                 elif(type(e[1]) is WgRouter):
-                    conf_temp += conf_template_peer_link.substitute(peer_public=publicKeys[str(e[1].tags['name'])], peer_endpoint=str(e[1].ip_address) + ":51820", peer_allowed=ips_to_string(e[1].allowed_ip_range), peer_persistent_keep_alive=str(21))
+                    if(e[1].default_gateway != None):
+                        conf_temp += conf_template_peer_link.substitute(peer_public=publicKeys[str(e[1].tags['name'])], peer_endpoint=str(e[1].ip_address) + ":51820", peer_allowed=ips_to_string(e[1].allowed_ip_range, e[1].default_gateway.allowed_ip_range), peer_persistent_keep_alive=str(21))
+                    else:
+                        conf_temp += conf_template_peer_link.substitute(peer_public=publicKeys[str(e[1].tags['name'])], peer_endpoint=str(e[1].ip_address) + ":51820", peer_allowed=ips_to_string(e[1].allowed_ip_range, ""), peer_persistent_keep_alive=str(21))
 
                 lat = topology.latency(n, e[1])
                 if (lat < 0):
@@ -177,7 +190,14 @@ def create_output(topology, dry_run = False):
             sshProcess.stdin.write("cd ~/../../etc/wireguard \n")
             sshProcess.stdin.write("wg-quick down wg0 \n")
             sshProcess.stdin.write("cp wg0.conf wg_tmp.conf \n")
-            #sshProcess.stdin.write("sudo tc qdisc del dev wg0 root \n") #TC RESET
+            if(lat > 0): #CHANGE BACK
+                sshProcess.stdin.write("sudo tc qdisc del dev wg0 root \n") #TC RESET
+                sshProcess.stdin.write("sudo tc qdisc del dev wg0 handle ffff: ingress \n")
+                sshProcess.stdin.write("sudo ip link set dev ifb0 down \n")
+                sshProcess.stdin.write("sudo modprobe -r ifb \n")
+
+
+
             #sshProcess.stdin.write('{}\n'.format(devices_pswd))
             sshProcess.stdin.write("exit\n")
             sshProcess.stdin.close()
@@ -192,11 +212,23 @@ def create_output(topology, dry_run = False):
 
             sshProcess.stdin.write("cd ~/../../etc/wireguard \n")
             sshProcess.stdin.write("wg-quick up wg0 \n")
-            #sshProcess.stdin.write("sudo tc qdisc add dev wg0 root handle 1: prio \n")
-            #sshProcess.stdin.write("sudo tc qdisc add dev wg0 parent 1:3 handle 30: netem delay " + str(1000) + "ms \n") #LAT set todo
+            if(lat > 0):
+                #OUTGOING
+                sshProcess.stdin.write("sudo tc qdisc add dev wg0 root handle 1: prio \n")
+                sshProcess.stdin.write("sudo tc qdisc add dev wg0 parent 1:3 handle 30: netem delay " + str(lat) + "ms \n") #LAT set todo
+                sshProcess.stdin.write("sudo tc filter add dev wg0 protocol ip parent 1:0 prio 3 u32 match ip dst " + "10.0.0.0/8" + " flowid 1:3 \n")
 
-            #for key in latency:
-                #sshProcess.stdin.write("sudo tc filter add dev wg0 protocol ip parent 1:0 prio 3 u32 match ip dst " + key + " flowid 1:3 \n")
+                #INCOMING
+                sshProcess.stdin.write("sudo modprobe ifb numifbs=1 \n")
+                sshProcess.stdin.write("sudo ip link set dev ifb0 up \n")
+                sshProcess.stdin.write("sudo tc qdisc add dev wg0 handle ffff: ingress \n")
+                sshProcess.stdin.write("sudo tc filter add dev wg0 parent ffff: protocol ip u32 match u32 0 0 action mirred egress redirect dev ifb0 \n")
+                sshProcess.stdin.write("sudo tc qdisc add dev ifb0 root handle 2: prio \n")
+                #sshProcess.stdin.write("sudo tc class add dev ifb0 parent 2: classid 2:1 prio rate " + str(lat) + "kbit \n")
+                #sshProcess.stdin.write("sudo tc qdisc add dev ifb0 parent 2:1 handle 20: netem delay " + str(lat) + "ms \n")
+                sshProcess.stdin.write("sudo tc filter add dev ifb0 protocol ip parent 2: prio 1 u32 match ip src " + "10.0.0.0/8" + " flowid 2:1 \n")
+
+
 
             sshProcess.stdin.write("exit\n")
             sshProcess.stdin.close()
